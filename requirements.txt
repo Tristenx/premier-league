@@ -1,3 +1,5 @@
 selenium
 pylint
 pandas
+ipykernel
+altair[all]
