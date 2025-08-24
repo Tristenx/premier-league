@@ -3,14 +3,14 @@
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 import pandas as pd
 
 
 def get_match_cards(season: int, match_week: int) -> dict[str, list[str]]:
     """Returns a dictionary of match data for a season and week."""
     driver = webdriver.Chrome()
-    url = f"https://www.premierleague.com/en/matches?competition=8&season={season}&matchweek={match_week}"
+    url = "https://www.premierleague.com" \
+        f"/en/matches?competition=8&season={season}&matchweek={match_week}"
     driver.get(url)
     match_container = driver.find_element(
         By.CLASS_NAME, "match-list-root__content")
@@ -19,9 +19,15 @@ def get_match_cards(season: int, match_week: int) -> dict[str, list[str]]:
 
     cards = {"season": [season for i in range(len(match_card_elements))],
              "match_week": [match_week for i in range(len(match_card_elements))],
-             "home_team": [i.find_elements(By.CLASS_NAME, "match-card__team-name-container")[0].text for i in match_card_elements],
-             "away_team": [i.find_elements(By.CLASS_NAME, "match-card__team-name-container")[1].text for i in match_card_elements],
-             "score": [i.find_element(By.CLASS_NAME, "match-card__score").text for i in match_card_elements]}
+             "home_team": [i.find_elements(
+                 By.CLASS_NAME, "match-card__team-name-container")[0].text
+                 for i in match_card_elements],
+             "away_team": [i.find_elements(
+                 By.CLASS_NAME, "match-card__team-name-container")[1].text
+                 for i in match_card_elements],
+             "score": [i.find_element(
+                 By.CLASS_NAME, "match-card__score").text
+                 for i in match_card_elements]}
 
     driver.close()
     return cards
@@ -30,7 +36,7 @@ def get_match_cards(season: int, match_week: int) -> dict[str, list[str]]:
 def file_exists(file_path: str) -> bool:
     """Checks if a file exists and returns a bool."""
     try:
-        with open("premier_league_data", "r") as file:
+        with open(file=file_path, mode="r", encoding="utf-8") as _:
             pass
         return True
     except FileNotFoundError:
