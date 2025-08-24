@@ -43,20 +43,25 @@ def file_exists(file_path: str) -> bool:
         return False
 
 
-def create_csv_file(file_path: str):
+def create_csv_file(file_path: str) -> None:
     """Creates a new empty csv file."""
     new_csv_df = pd.DataFrame(
         columns=["season", "match_week", "home_team", "away_team", "score"])
     new_csv_df.to_csv(path_or_buf=file_path)
 
 
-if __name__ == "__main__":
-    if not file_exists("premier_league_data.csv"):
-        create_csv_file("premier_league_data.csv")
+def populate_csv_with_cards(file_name) -> None:
+    """Populates the csv with scraped data."""
+    if not file_exists(file_name):
+        create_csv_file(file_name)
     for year in range(2012, 2025):
         for week in range(1, 39):
             match_cards = get_match_cards(year, week)
             match_cards_df = pd.DataFrame(match_cards)
             match_cards_df.to_csv(
-                path_or_buf="premier_league_data.csv", mode="a", header=False)
+                path_or_buf=file_name, mode="a", header=False)
             sleep(1)
+
+
+if __name__ == "__main__":
+    populate_csv_with_cards("test_file.csv")

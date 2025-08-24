@@ -3,5 +3,3 @@ pylint
 pandas
 ipykernel
 altair[all]
-scikit-learn
-matplotlib
