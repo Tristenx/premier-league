@@ -4,6 +4,8 @@ from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pandas as pd
+import requests as req
+from bs4 import BeautifulSoup
 
 
 def get_match_cards(season: int, match_week: int) -> dict[str, list[str]]:
@@ -50,8 +52,8 @@ def create_csv_file(file_path: str) -> None:
     new_csv_df.to_csv(path_or_buf=file_path)
 
 
-def populate_csv_with_cards(file_name) -> None:
-    """Populates the csv with scraped data."""
+def populate_csv_with_match_cards(file_name) -> None:
+    """Populates a csv with match cards."""
     if not file_exists(file_name):
         create_csv_file(file_name)
     for year in range(2012, 2025):
@@ -63,5 +65,45 @@ def populate_csv_with_cards(file_name) -> None:
             sleep(1)
 
 
+def get_team_elo_soup(season: int) -> BeautifulSoup:
+    """Returns every team elo for a season"""
+    season = f"{season}-{season+1}"
+    url = f"https://elofootball.com/country.php?countryiso=ENG&season={season}"
+    res = req.get(url, timeout=15)
+    if res.status_code == 200:
+        return BeautifulSoup(res.text, "html.parser")
+    raise req.exceptions.ConnectionError(res.status_code, res.reason)
+
+
+def get_team_elo(soup: BeautifulSoup) -> dict[str, str]:
+    """Extracts team elos from soup."""
+    table_contents = list(filter(None, soup.find(
+        attrs={"id": "Ranking"}).get_text().split("\n\n")))
+    table_contents = table_contents[1:]
+
+    team_stats = {}
+    for team in table_contents:
+        stats = list(filter(None, team.split("\n")))
+        if len(stats) > 3:
+            team_name = " ".join(stats[0].split(
+                " ")[1:]).replace("FC", "").strip()
+            team_elo = stats[7]
+            team_stats[team_name] = team_elo
+    return team_stats
+
+
 if __name__ == "__main__":
-    populate_csv_with_cards("test_file.csv")
+    populate_csv_with_match_cards("premier_league_data.csv")
+    for year in range(2012, 2025):
+        team_ratings = get_team_elo(get_team_elo_soup(year))
+        data = pd.read_csv("premier_league_data.csv")
+        season_data = data[data["season"] == year]
+        season_data["home_elo"] = season_data["home_team"].map(team_ratings)
+        season_data["away_elo"] = season_data["away_team"].map(team_ratings)
+        if year == 2012:
+            season_data.to_csv(
+                path_or_buf="premier_league_data.csv", mode="w", header=True)
+        else:
+            season_data.to_csv(
+                path_or_buf="premier_league_data.csv", mode="a", header=False)
+        print(season_data.head())
