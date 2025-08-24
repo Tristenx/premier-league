@@ -14,6 +14,7 @@ def get_match_cards(season: int, match_week: int) -> dict[str, list[str]]:
     url = "https://www.premierleague.com" \
         f"/en/matches?competition=8&season={season}&matchweek={match_week}"
     driver.get(url)
+    sleep(1)
     match_container = driver.find_element(
         By.CLASS_NAME, "match-list-root__content")
     match_card_elements = match_container.find_elements(
@@ -62,7 +63,6 @@ def populate_csv_with_match_cards(file_name) -> None:
             match_cards_df = pd.DataFrame(match_cards)
             match_cards_df.to_csv(
                 path_or_buf=file_name, mode="a", header=False)
-            sleep(1)
 
 
 def get_team_elo_soup(season: int) -> BeautifulSoup:
@@ -92,18 +92,24 @@ def get_team_elo(soup: BeautifulSoup) -> dict[str, str]:
     return team_stats
 
 
+def fill_home_elo_column(x) -> str:
+    """Function used to apply ranking to elo column."""
+    rankings = yearly_ratings[x["season"]]
+    return rankings.get(x["home_team"])
+
+
+def fill_away_elo_column(x) -> str:
+    """Function used to apply ranking to elo column."""
+    rankings = yearly_ratings[x["season"]]
+    return rankings.get(x["away_team"])
+
+
 if __name__ == "__main__":
     populate_csv_with_match_cards("premier_league_data.csv")
+    data = pd.read_csv("premier_league_data.csv")
+    yearly_ratings = {}
     for year in range(2012, 2025):
-        team_ratings = get_team_elo(get_team_elo_soup(year))
-        data = pd.read_csv("premier_league_data.csv")
-        season_data = data[data["season"] == year]
-        season_data["home_elo"] = season_data["home_team"].map(team_ratings)
-        season_data["away_elo"] = season_data["away_team"].map(team_ratings)
-        if year == 2012:
-            season_data.to_csv(
-                path_or_buf="premier_league_data.csv", mode="w", header=True)
-        else:
-            season_data.to_csv(
-                path_or_buf="premier_league_data.csv", mode="a", header=False)
-        print(season_data.head())
+        yearly_ratings[year] = get_team_elo(get_team_elo_soup(year))
+    data["home_elo"] = data.apply(fill_home_elo_column, axis=1)
+    data["away_elo"] = data.apply(fill_away_elo_column, axis=1)
+    data.to_csv("premier_league_data.csv")
