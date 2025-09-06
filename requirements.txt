@@ -1,7 +1,2 @@
-selenium
 pylint
-pandas
-ipykernel
-altair[all]
 requests
-bs4
