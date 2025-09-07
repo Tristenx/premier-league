@@ -18,6 +18,7 @@ Requirements:
     - selenium
 """
 import re
+from argparse import ArgumentParser, Namespace
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,13 +30,28 @@ def get_team_stat_links(url: str) -> list[str]:
     driver.get(url)
     table = driver.find_element(By.ID, "switcher_results2024-202591")
     link_elements = table.find_elements(By.TAG_NAME, "a")
-    team_links = [element.get_attribute("href") for element in link_elements if re.search(
-        "Stats$", element.get_attribute("href"))]
+    team_links = list({element.get_attribute("href") for element in link_elements if re.search(
+        r"Stats$", element.get_attribute("href"))})
+
     driver.close()
     return team_links
 
 
+def get_cl_arguments() -> Namespace:
+    """Returns a Namespace that contains command-line arguments."""
+    parser = ArgumentParser()
+    parser.add_argument("season", type=str,
+                        help="Premier League season to scrape.")
+    parser.add_argument("output", type=str,
+                        help="File path to save scraped data.")
+    arguments = parser.parse_args()
+    return arguments
+
+
 if __name__ == "__main__":
+    args = get_cl_arguments()
     WEBSITE = "https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats"
     team_stat_links = get_team_stat_links(WEBSITE)
-    print(team_stat_links)
+    print(len(team_stat_links))
+    for link in team_stat_links:
+        print(link)
