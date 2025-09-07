@@ -24,6 +24,17 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
+def get_cl_arguments() -> Namespace:
+    """Returns a Namespace that contains command-line arguments."""
+    parser = ArgumentParser()
+    parser.add_argument("season", type=str,
+                        help="Premier League season to scrape.")
+    parser.add_argument("output", type=str,
+                        help="File path to save scraped data.")
+    arguments = parser.parse_args()
+    return arguments
+
+
 def get_team_stat_links(url: str) -> list[str]:
     """Returns links for each teams statistics."""
     driver = webdriver.Chrome()
@@ -35,17 +46,6 @@ def get_team_stat_links(url: str) -> list[str]:
 
     driver.close()
     return team_links
-
-
-def get_cl_arguments() -> Namespace:
-    """Returns a Namespace that contains command-line arguments."""
-    parser = ArgumentParser()
-    parser.add_argument("season", type=str,
-                        help="Premier League season to scrape.")
-    parser.add_argument("output", type=str,
-                        help="File path to save scraped data.")
-    arguments = parser.parse_args()
-    return arguments
 
 
 if __name__ == "__main__":
